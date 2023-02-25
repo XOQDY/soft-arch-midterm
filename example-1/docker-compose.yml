@@ -177,3 +177,21 @@ services:
       - db
       - rabbit
     restart: "no"
+
+  advertising:
+    image: advertising
+    build: 
+      context: ./advertising
+      dockerfile: Dockerfile-dev
+    container_name: advertising
+    volumes:
+      - /tmp/advertising/npm-cache:/root/.npm:z
+      - ./advertising/src:/usr/src/app/src:z
+    ports:
+      - "4003:80"
+    environment:
+      - PORT=80
+      - NODE_ENV=development
+    depends_on:
+      - db
+    restart: "no"

@@ -17,6 +17,15 @@ app.get("/video", (req, res) => {
     res.sendFile(localFilePath);
 });
 
+app.get("/advertising", (req, res) => {
+    const advertisingId = req.query.id;
+    const localFilePath = path.join(storagePath, advertisingId);
+    res.send(`
+    <h1>Advertising:</h1>
+    <pre>${JSON.stringify(localFilePath, null, 2)}</pre>
+  `)
+});
+
 //
 // HTTP POST route to upload a video to storage.
 //

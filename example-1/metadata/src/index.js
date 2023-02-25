@@ -40,6 +40,7 @@ function connectRabbit(rabbitHost) {
 function setupHandlers(microservice) {
 
     const videosCollection = microservice.db.collection("videos");
+    const adsCollection = microservice.db.collection("advertising")
 
     //
     // HTTP GET API to retrieve list of videos from the database.
@@ -75,6 +76,26 @@ function setupHandlers(microservice) {
             })
             .catch(err => {
                 console.error(`Failed to get video ${videoId}.`);
+                console.error(err);
+                res.sendStatus(500);
+            });
+    });
+
+    //
+    // HTTP GET API to retrieve details for a particular advertising.
+    //
+    microservice.app.get("/advertising", (req, res) => {
+        return adsCollection.aggregate([{ $sample: { size: 1}}]).toArray() // Returns a promise so we can await the result in the test.
+            .then(ad => {
+                if (!ad) {
+                    res.sendStatus(404); // Video with the requested ID doesn't exist!
+                }
+                else {
+                    res.json(ad[0]);
+                }
+            })
+            .catch(err => {
+                console.error(`Failed to get ad ${req.query.id}.`);
                 console.error(err);
                 res.sendStatus(500);
             });

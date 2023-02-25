@@ -15,6 +15,7 @@ function setupHandlers(app) {
     // Main web page that lists videos.
     //
     app.get("/", (req, res) => {
+        const advertisingId = 1;
         http.request( // Get the list of videos from the metadata microservice.
             {
                 host: `metadata`,
@@ -28,8 +29,29 @@ function setupHandlers(app) {
                 });
 
                 response.on("end", () => {
-                    // Renders the video list for display in the browser.
-                    res.render("video-list", { videos: JSON.parse(data).videos });
+                    http.request(
+                            {
+                                host: `advertising`,
+                                path: `/advertising?id=${advertisingId}`,
+                                method: `GET`,
+                            },
+                            (response) => {
+                                let adData = "";
+                                response.on("data", chunk => {
+                                    adData += chunk;
+                                });
+                
+                                response.on("end", () => {
+                                    res.render("video-list", { videos: JSON.parse(data).videos, ad: JSON.parse(adData)})
+                                });
+                
+                                response.on("error", err => {
+                                    console.error("Failed to get history.");
+                                    console.error(err || `Status code: ${response.statusCode}`);
+                                    res.sendStatus(500);
+                                });
+                            }
+                        ).end();
                 });
 
                 response.on("error", err => {
@@ -134,6 +156,24 @@ function setupHandlers(app) {
         
         req.pipe(forwardRequest);
     });
+
+    app.get("/api/advertising", (req, res) => {
+        
+        const forwardRequest = http.request( // Forward the request to the advertising microservice.
+            {
+                host: `advertising`,
+                path: `/advertising?id=${req.query.id}`,
+                method: 'GET',
+            }, 
+            forwardResponse => {
+                res.writeHeader(forwardResponse.statusCode, forwardResponse.headers);
+                forwardResponse.pipe(res);
+            }
+        );
+        
+        req.pipe(forwardRequest);
+    });
+
 
     //
     // HTTP POST API to upload video from the user's browser.
